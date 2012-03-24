@@ -1,0 +1,71 @@
+#!/bin/bash
+# Here do anything needed to install the service
+# i.e. apt-get install -y foo  or  bzr branch http://myserver/mycode /srv/webroot
+
+set -eu #-x for verbose logging to juju debug-log
+
+juju-log 'Reading your config.yaml file...'
+pod_url=`config-get pod_url`
+
+
+juju-log 'Installing ruby/rails pre-requirement packages...'
+apt-get update
+## TODO: cleanup
+apt-get -y install -qq git-core build-essential
+apt-get -y install -qq openssl libreadline6 libreadline6-dev curl\
+  zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-0 libsqlite3-dev\
+  sqlite3 libxml2-dev libxslt-dev autoconf libc6-dev ncurses-dev\
+  automake libtool bison subversion
+apt-get -y install -qq libxslt1.1 libxslt1-dev libxml2 ruby-full\
+  libmysqlclient-dev libmysql-ruby libssl-dev libopenssl-ruby\
+  libcurl4-openssl-dev imagemagick libmagickwand-dev git-core\
+  redis-server libffi-dev libffi-ruby rubygems libsqlite3-dev\
+  libpq-dev libreadline-gplv2-dev openjdk-7-jre
+apt-get -y install -qq libsqlite3-ruby libmysqlclient16\
+  libmysqlclient16-dev libpgsql-ruby libxml2-dev
+
+
+juju-log 'Installing rbenv...'
+cd ~
+git clone git://github.com/sstephenson/rbenv.git .rbenv
+echo 'export PATH="$HOME/.rbenv/bin:$HOME/app/bin:$PATH"' >> ~/.bash_profile
+echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
+
+export PATH="$HOME/.rbenv/bin:$HOME/app/bin:$PATH"
+eval "$(rbenv init -)"
+
+juju-log 'Installing ruby-build as a rbenv plugin...'
+mkdir -p ~/.rbenv/plugins
+cd ~/.rbenv/plugins
+git clone git://github.com/sstephenson/ruby-build.git
+
+juju-log 'Installing Ruby 1.9.3-p125...'
+rbenv install 1.9.3-p125
+rbenv global 1.9.3-p125
+rbenv rehash
+
+
+
+
+juju-log 'Getting Diaspora from git repository...'
+## TODO: Should verify build-status before getting
+cd ~
+git clone git://github.com/diaspora/diaspora.git
+juju-log 'Installing required Ruby gems...'
+cd diaspora
+export DB="all"
+bundle install --without development:test:heroku --path vendor/bundle --binstubs bin/ --deployment
+
+
+
+
+juju-log 'Configuring your pod...'
+cp config/script_server.yml.example config/script_server.yml
+cp config/application.yml.example config/application.yml
+cp config/database.yml.example config/database.yml
+sed -i 's/rails_env: "development"/rails_env: "production"/' config/script_server.yml
+sed -i 's/serve_static_assets = false/serve_static_assets = true/' config/environments/production.rb
+
+# injecting settings to application.yml
+sed -i "s/pod_url: \"http:\/\/localhost:3000\/\"/pod_url: \"${pod_url}\"/"
+## TODO: other config stuff

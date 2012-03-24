@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby-local-exec
+# This must be renamed to the name of the relation. The goal here is to
+# affect any change needed by relationships being formed
+# This script should be idempotent.
+
+require 'fileutils'
+
+def jujulog(log_msg)
+  system "juju-log #{log_msg}"
+end
+class Relation
+  def self.[](index)
+    `relation-get #{index.to_s}`
+  end
+  def self.set?(*vars)
+    vars.each {|i| exit if i.empty?}
+  end
+end
+def File.gsub!(file_name,replaces)
+  text = File.read(file_name)
+  replaces.each { |old,new| text.gsub! old,new }
+  File.open(file_name, "w") do |file| 
+    file.puts text
+  end
+end
+
+exit unless Relation.set? 'user','password','host','database'
+
+jujulog "Configuring your pod to use database"
+FileUtils.cd File.expand_path('~/disapora/')
+FileUtils.cp 'config/database.yml.example', 'config/database.yml'
+
+File.gsub! 'config/database.yml', { 'host: "localhost"' => "host: '#{Relation['host']}'",
+				    'username: "root"' => "username: '#{Relation['user']}'",
+				    'password: ""' => "password: '#{Relation['password']}'"}
+
+jujulog 'Creating and migrating database...'
+system 'RAILS_ENV=production bundle exec rake db:create'
+system 'RAILS_ENV=production bundle exec rake db:migrate'
+
+
+jujulog "#{EVN['JUJU_REMOTE_UNIT']} joined"
+
+
