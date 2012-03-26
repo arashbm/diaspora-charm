@@ -67,5 +67,62 @@ sed -i 's/rails_env: "development"/rails_env: "production"/' config/script_serve
 sed -i 's/serve_static_assets = false/serve_static_assets = true/' config/environments/production.rb
 
 # injecting settings to application.yml
-sed -i "s/pod_url: \"http:\/\/localhost:3000\/\"/pod_url: \"${pod_url}\"/"
+sed -i "s/pod_url: \"http:\/\/localhost:3000\/\"/pod_url: \"\"/"
+cat > "config/application.yml" <<EOS
+production:
+  pod_url: "${pod_url}"
+  ca_file: '/etc/ssl/certs/ca-certificates.crt'
+  redis_url: ''
+  s3_key: 'key'
+  s3_secret: 'secret'
+  s3_bucket: 'my_photos'
+  s3_region: 'us-east-1'
+  registrations_closed: false
+  open_invitations: true
+  admin_account: ''
+  invite_count: 25
+  no_follow_diasporahq: false
+  community_spotlight:
+    - 'diasporahq@joindiaspora.com'
+  spotlight_suggest_email: ''
+  admins:
+    - 'example_user1dsioaioedfhgoiesajdigtoearogjaidofgjo'
+  mount_resque_web: true
+  debug: false
+  airbrake_api_key: ''
+  facebook_app_id: ''
+  facebook_app_secret: ''
+  twitter_consumer_key: ''
+  twitter_consumer_secret: ''
+  tumblr_consumer_key: ''
+  tumblr_consumer_secret: ''
+  NEW_RELIC_LICENSE_KEY: ''
+  new_relic_app_name: ''
+  single_process_mode: false
+  pubsub_server: 'https://pubsubhubbub.appspot.com/'
+  mailer_on: false
+  smtp_address: 'smtp.example.com'
+  smtp_port: '587'
+  mailer_method: 'smtp'
+  message_bus_api_key: ''
+  smtp_authentication: 'plain'
+  smtp_starttls_auto: true
+  smtp_openssl_verify_mode:
+  smtp_domain: 'example.com'
+  smtp_username: 'smtp_username'
+  smtp_password: 'secret'
+  smtp_sender_address: 'no-reply@joindiaspora.com'
+  circumvent_ssl_requirement: false
+  image_redirect_url: ''
+  google_a_site: false
+  piwik_id:
+  piwik_url:
+
+  # Donations
+
+  # Leave this blank to not show the request for donations
+  # Use paypal for recurring donations
+  paypal_hosted_button_id: ""
+EOS
+
 ## TODO: other config stuff
