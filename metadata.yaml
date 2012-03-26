@@ -1,4 +1,4 @@
-name: Diaspora
+name: diaspora
 summary: Juju charm to set up a personal diaspora pod
 description: |
   Diaspora, the privacy aware, personally controlled, do-it-all,
@@ -6,7 +6,7 @@ description: |
   that puts you in control of you own data. When you set up a
   personal pod, all your data is stored in that pod. You maintain
   ownership of everything you share on Diaspora, giving you full
-  control over how it's distributed. 
+  control over how it's distributed.
 provides:
   website:
     interface: http
